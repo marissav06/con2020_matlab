@@ -1,4 +1,4 @@
-# con2020_matabl
+# con2020_matlab
 This repository contains MATLAB code for the Connerney et al. (2020) Jupiter current sheet model. Please see https://github.com/marissav06/con2020_idl for the IDL version and https://github.com/gabbyprovan/con2020/ for Python (Python 3).
 
 A PDF documentation file ([con2020_final_code_documentation_sept13_2021.pdf](https://github.com/marissav06/con2020_idl/files/7157389/con2020_final_code_documentation_sept13_2021.pdf)) is available in this repository. It describes the Connerney current sheet model and general code development (equations used, numerical integration assumptions, accuracy testing, etc.). Details specific to the MATLAB code are provided in this readme file.
