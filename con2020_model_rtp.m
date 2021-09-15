@@ -1,6 +1,6 @@
 function brtp = con2020_model_rtp(eq_type, r_rj, colat_rads, elong_rads, varargin) % varagin = use_these_params in this context
 % ======
-% CAN_SHEET_VARIABLE_2020_HYBRID (Spherical)
+% CON2020_MODEL_RTP (Spherical)
 % ======
 % Code to calculate the perturbation magnetic field produced by the Connerney et al. 1981 (CAN) current sheet, which is
 % represented by a finite disk of current.
