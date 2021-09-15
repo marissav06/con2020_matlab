@@ -97,9 +97,7 @@ switch numel(varargin) % faster than if exist('use_these_params','var')
         Default_values.d__cs_half_thickness_rj                 =   3.6; % half-height  (Rj)
         
         Default_values.xt__cs_tilt_degs                        =   9.3 ; % dipole tilt (Deg.)
-        Default_values.xp__cs_rhs_azimuthal_angle_of_tilt_degs = -24.2 ; % dipole longitude (right handed) (Deg.), Table 1 xp = 204.2 but that value is in left handed SIII
-        %Default_values.xt__cs_tilt_degs                        =   -9.3 ; % dipole tilt (Deg.)
-        %Default_values.xp__cs_rhs_azimuthal_angle_of_tilt_degs = 155.8 ; % dipole longitude (right handed) (Deg.), Table 1 xp = 204.2 but that value is in left handed SIII
+        Default_values.xp__cs_rhs_azimuthal_angle_of_tilt_degs = 155.8 ; % dipole longitude (right handed) (Deg.), Table 1 xp = 204.2 but that value is in left handed SIII
 
         Default_values.i_rho__azimuthal_current_density_nT     =  16.7; % Azimuthal current term
         Default_values.error_check = 1;     % input error check: 1 = yes, 0 = no
@@ -177,6 +175,7 @@ if error_check(1)
     end
 end
 
+xp__cs_rhs_azimuthal_angle_of_tilt_degs = xp__cs_rhs_azimuthal_angle_of_tilt_degs - 180.0; % shift needed because of the way we define the rotation angle 
 dipole_shift = xp__cs_rhs_azimuthal_angle_of_tilt_degs * Deg2Rad; % xp__cs_rhs_azimuthal_angle_of_tilt_degs is longitude of the dipole. dipole_shift used here and at end of code
 theta_cs     = xt__cs_tilt_degs                        * Deg2Rad; % dipole tilt is xt__cs_tilt_degs
 cos_dipole_shift = cos(dipole_shift);
