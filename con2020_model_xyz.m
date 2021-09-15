@@ -1,15 +1,17 @@
 function Bxyz = con2020_model_xyz(eq_type, x_rj, y_rj, z_rj, varargin)
 % ======
-% CAN_SHEET_VARIABLE_2020_HYBRID (Cartesian)
+% CON2020_MODEL_XYZ (Cartesian)
 % ======
 % Code to calculate the perturbation magnetic field produced by the Connerney et al. 1981 (CAN) current sheet, which is
 % represented by a finite disk of current.
 %  This disk has variable parameters including (among others) the current density, and current sheet inner edge, outer
 %   edge and thickness.
-%  The disk is centered on the magnetic equator (shifted in longitude and tilted according to the dipole field
+%  The disk is centered on the magnetic equator (shifted in longitude and tilted as specified by model parameters xp__cs_rhs_azimuthal_angle_of_tilt_degs and xt__cs_tilt_degs)
 %   parameters of an internal field model like VIP4 or JRM09)
 %  This 2020 version includes a radial current per Connerney et al. (2020),
 %   https://agupubs.onlinelibrary.wiley.com/doi/full/10.1029/2020JA028138
+%  For more details about the model and the development of this code please see the PDF at 
+%   https://github.com/marissav06/con2020_idl/blob/main/con2020_final_code_documentation_sept13_2021.pdf
 %
 % Use in one of the following ways:
 %  Use default current sheet model parameter structure:  B = con2020_model_xyz(eq_type, x_rj, y_rj, z_rj) 
@@ -30,12 +32,12 @@ function Bxyz = con2020_model_xyz(eq_type, x_rj, y_rj, z_rj, varargin)
 % Optional input of a structure: use_these_params
 % with the structure fields:
 %  use_these_params.mu_i_div2__current_density_nT           - mu0i0/2 term (current sheet current density), in nT
-%  use_these_params.i_rho__azimuthal_current_density_nT     - azimuthal current term from Connerney et al., 2020
+%  use_these_params.i_rho__radial_current_density_nT        - radial current term from Connerney et al., 2020 (set this to zero to turn radial currents off as in Connerney et al. 1981)
 %  use_these_params.r0__inner_rj                            - inner edge of current disk in Rj
 %  use_these_params.r1__outer_rj                            - outer edge of current disk in Rj
 %  use_these_params.d__cs_half_thickness_rj                 - current sheet half thickness in Rj
-%  use_these_params.xt__cs_tilt_degs                        - dipole tilt in degrees
-%  use_these_params.xp__cs_rhs_azimuthal_angle_of_tilt_degs - dipole longitude (right handed) in degrees
+%  use_these_params.xt__cs_tilt_degs                        - current sheet tilt in degrees
+%  use_these_params.xp__cs_rhs_azimuthal_angle_of_tilt_degs - current sheet longitude (right handed) in degrees
 %  use_these_params.error_check                             - 1 to check that inputs are valid (Default),
 %                                                             or set to 0 to skip input checks (faster).
 %
@@ -62,10 +64,10 @@ function Bxyz = con2020_model_xyz(eq_type, x_rj, y_rj, z_rj, varargin)
 %        Bessel functions.
 %
 % Updates:
-% by Marissa Vogt, March 2021,
-% RJ Wilson did some speedups and re-formatting of lines, also March 2021
+% by Marissa Vogt (mvogt@bu.edu), March 2021,
+% RJ Wilson (Rob.Wilson@lasp.colorado.edu) did some speedups and re-formatting of lines, also March 2021
 %
-% Converted to MATLAB by Marty Brennan, June 2021
+% Converted to MATLAB by Marty Brennan (martin.brennan@jpl.nasa.gov), June 2021
 % RJ Wilson did some reformatting, June 2021, and added
 % int_tabulated_rjw2_sub as a subfunction, rather than separate file int_tabulated_rjw2.m
 % which was then replaced by some in-line code instead of calling the subfunction
@@ -83,7 +85,7 @@ switch numel(varargin) % faster than if exist('use_these_params','var')
         d__cs_half_thickness_rj                 = double(use_these_params.d__cs_half_thickness_rj                );
         xt__cs_tilt_degs                        = double(use_these_params.xt__cs_tilt_degs                       );
         xp__cs_rhs_azimuthal_angle_of_tilt_degs = double(use_these_params.xp__cs_rhs_azimuthal_angle_of_tilt_degs);
-        i_rho__azimuthal_current_density_nT     = double(use_these_params.i_rho__azimuthal_current_density_nT    );
+        i_rho__radial_current_density_nT     = double(use_these_params.i_rho__radial_current_density_nT    );
         error_check = double(use_these_params.error_check);
         
         if strcmpi(eq_type,'default_values') % case insensitive % Not yet checked if eq_type is a character string
@@ -99,7 +101,7 @@ switch numel(varargin) % faster than if exist('use_these_params','var')
         Default_values.xt__cs_tilt_degs                        =   9.3 ; % dipole tilt (Deg.)
         Default_values.xp__cs_rhs_azimuthal_angle_of_tilt_degs = 155.8 ; % dipole longitude (right handed) (Deg.), Table 1 xp = 204.2 but that value is in left handed SIII
 
-        Default_values.i_rho__azimuthal_current_density_nT     =  16.7; % Azimuthal current term
+        Default_values.i_rho__radial_current_density_nT     =  16.7; % Radial current term
         Default_values.error_check = 1;     % input error check: 1 = yes, 0 = no
         
         if strcmpi(eq_type,'default_values') % case insensitive. % Not yet checked if eq_type is a character string, Matlab doesn't care
@@ -114,7 +116,7 @@ switch numel(varargin) % faster than if exist('use_these_params','var')
         d__cs_half_thickness_rj                 = Default_values.d__cs_half_thickness_rj                ;
         xt__cs_tilt_degs                        = Default_values.xt__cs_tilt_degs                       ;
         xp__cs_rhs_azimuthal_angle_of_tilt_degs = Default_values.xp__cs_rhs_azimuthal_angle_of_tilt_degs;
-        i_rho__azimuthal_current_density_nT     = Default_values.i_rho__azimuthal_current_density_nT    ;
+        i_rho__radial_current_density_nT     = Default_values.i_rho__radial_current_density_nT    ;
         error_check = Default_values.error_check ;
         
     otherwise
@@ -137,7 +139,7 @@ if error_check(1)
     if  (~isnumeric(d__cs_half_thickness_rj                )) || (numel(d__cs_half_thickness_rj                )~=1), error('ERROR: Field          d__cs_half_thickness_rj        must be a scalar double number');end
     if  (~isnumeric(xt__cs_tilt_degs                       )) || (numel(xt__cs_tilt_degs                       )~=1), error('ERROR: Field             xt__cs_tilt_degs            must be a scalar double number');end
     if  (~isnumeric(xp__cs_rhs_azimuthal_angle_of_tilt_degs)) || (numel(xp__cs_rhs_azimuthal_angle_of_tilt_degs)~=1), error('ERROR: Field xp__cs_rhs_azimuthal_angle_of_tilt_degs must be a scalar double number');end
-    if  (~isnumeric(i_rho__azimuthal_current_density_nT    )) || (numel(i_rho__azimuthal_current_density_nT    )~=1), error('ERROR: Field   i_rho__azimuthal_current_density_nT   must be a scalar double number');end
+    if  (~isnumeric(i_rho__radial_current_density_nT    )) || (numel(i_rho__radial_current_density_nT    )~=1), error('ERROR: Field   i_rho__radial_current_density_nT   must be a scalar double number');end
     
     %if  (error_check~=0) && (error_check~=1), error('ERROR: Field  error_check must be 0 or 1');end
     % if here error_check must be scalar and not 0
@@ -361,7 +363,7 @@ end
 
 
 % New to CAN2020 (not included in CAN1981): radial current produces an azimuthal field, so Bphi is nonzero
-bphi1 = 2.7975*i_rho__azimuthal_current_density_nT./rho1;
+bphi1 = 2.7975*i_rho__radial_current_density_nT./rho1;
 if scalar_input
     if abs_z1 < d__cs_half_thickness_rj, bphi1 =  bphi1 * abs_z1 / d__cs_half_thickness_rj; end
     
