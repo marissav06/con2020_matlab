@@ -76,6 +76,7 @@ function Bxyz = con2020_model_xyz(eq_type, x_rj, y_rj, z_rj, varargin)
 
 switch numel(varargin) % faster than if exist('use_these_params','var')
     case 1
+        use_these_params = varargin{1};    	
         if ~isstruct(use_these_params)
             error('Must be a structure of terms to use in code')
         end
