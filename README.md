@@ -53,12 +53,12 @@ These codes were developed by Fran Bagenal, Marty Brennan, Matt James, Gabby Pro
   </tr>
   <tr>
     <td>r0__inner_rj</td>
-    <td>R0, radial current term from Connerney et al., 2020 (set this to zero to turn radial currents off as in Connerney et al. 1981)</td>
+    <td>inner edge of current disk in Rj</td>
     <td>7.8 Rj</td>
   </tr>
   <tr>
     <td>r1__outer_rj</td>
-    <td>R1, radial current term from Connerney et al., 2020 (set this to zero to turn radial currents off as in Connerney et al. 1981)</td>
+    <td>outer edge of current disk in Rj</td>
     <td>51.4 Rj</td>
   </tr>
   <tr>
