@@ -32,7 +32,7 @@ function Bxyz = con2020_model_xyz(eq_type, x_rj, y_rj, z_rj, varargin)
 % Optional input of a structure: use_these_params
 % with the structure fields:
 %  use_these_params.mu_i_div2__current_density_nT           - mu0i0/2 term (current sheet current density), in nT
-%  use_these_params.i_rho__radial_current_density_nT        - radial current term from Connerney et al., 2020 (set this to zero to turn radial currents off as in Connerney et al. 1981)
+%  use_these_params.i_rho__radial_current_intensity_MA      - radial current term from Connerney et al., 2020 (set this to zero to turn radial currents off as in Connerney et al. 1981)
 %  use_these_params.r0__inner_rj                            - inner edge of current disk in Rj
 %  use_these_params.r1__outer_rj                            - outer edge of current disk in Rj
 %  use_these_params.d__cs_half_thickness_rj                 - current sheet half thickness in Rj
@@ -48,11 +48,11 @@ function Bxyz = con2020_model_xyz(eq_type, x_rj, y_rj, z_rj, varargin)
 % Outputs:
 %  B - Cartesian Magnetic field vector from current sheet model, [Bx, By, Bz], units of nT.
 %
-% This code takes a hybrid approach to calculating the current sheet field, using the integral equations in some regions
+% This code can take a hybrid approach to calculating the current sheet field, using the integral equations in some regions
 % and the analytic equations in others.
 % Following Connerney et al. 1981, figure A1, and Edwards et al. (2001), figure 2, the choice of integral vs. analytic
 % equations is most important near rho = r0 and z = 0.
-% By default, this code uses the analytic equations everywhere except |Z| < D*1.5 and |Rho-R0| < 2
+% By default, this hybrid method uses the analytic equations everywhere except |Z| < D*1.5 and |Rho-R0| < 2
 %    Analytic equations:
 %        For the analytic equations, we use the equations provided by Edwards et al. 2001:
 %         https://doi.org/10.1016/S0032-0633(00)00164-1
@@ -73,6 +73,7 @@ function Bxyz = con2020_model_xyz(eq_type, x_rj, y_rj, z_rj, varargin)
 % which was then replaced by some in-line code instead of calling the subfunction
 % RJ Wilson split initial Matlab and IDL code in to Cartesian and a Spherical wrapper code and updated this help text,
 % in August 2021, to make con2020_model_xyz and con2020_model_rtp.
+% RJW Wilson renamed i_rho__radial_current_density_nT to i_rho__radial_current_intensity_MA in June 2022.
 
 switch numel(varargin) % faster than if exist('use_these_params','var')
     case 1
@@ -86,7 +87,7 @@ switch numel(varargin) % faster than if exist('use_these_params','var')
         d__cs_half_thickness_rj                 = double(use_these_params.d__cs_half_thickness_rj                );
         xt__cs_tilt_degs                        = double(use_these_params.xt__cs_tilt_degs                       );
         xp__cs_rhs_azimuthal_angle_of_tilt_degs = double(use_these_params.xp__cs_rhs_azimuthal_angle_of_tilt_degs);
-        i_rho__radial_current_density_nT     = double(use_these_params.i_rho__radial_current_density_nT    );
+        i_rho__radial_current_intensity_MA      = double(use_these_params.i_rho__radial_current_intensity_MA     );
         error_check = double(use_these_params.error_check);
         
         if strcmpi(eq_type,'default_values') % case insensitive % Not yet checked if eq_type is a character string
@@ -98,12 +99,13 @@ switch numel(varargin) % faster than if exist('use_these_params','var')
         Default_values.r0__inner_rj                            =   7.8; % inner radius (Rj)
         Default_values.r1__outer_rj                            =  51.4; % outer radius (Rj)
         Default_values.d__cs_half_thickness_rj                 =   3.6; % half-height  (Rj)
-        
-        Default_values.xt__cs_tilt_degs                        =   9.3 ; % dipole tilt (Deg.)
-        Default_values.xp__cs_rhs_azimuthal_angle_of_tilt_degs = 155.8 ; % dipole longitude (right handed) (Deg.), Table 1 xp = 204.2 but that value is in left handed SIII
-
-        Default_values.i_rho__radial_current_density_nT     =  16.7; % Radial current term
-        Default_values.error_check = 1;     % input error check: 1 = yes, 0 = no
+        Default_values.xt__cs_tilt_degs                        =   9.3; % dipole tilt (Deg.)
+        Default_values.xp__cs_rhs_azimuthal_angle_of_tilt_degs = 155.8; % dipole longitude (right handed) (Deg.), Table 1 xp = 204.2 but that value is in left handed SIII
+        Default_values.i_rho__radial_current_intensity_MA      =  16.7; % radial current term from Connerney et al., 2020, in mega-Amps.
+        % NOTE: The default value (16.7 MA) is the average value from Connerney et al 2020. This value was shown to vary from one
+        % pass to the next, where Table 2 (units of MA) provides radial current intensity values for 23 of the first 24 perijoves
+        % (units mistakenly given as nT in the article text).
+        Default_values.error_check = 1; % input error check: 1 = yes, 0 = no
         
         if strcmpi(eq_type,'default_values') % case insensitive. % Not yet checked if eq_type is a character string, Matlab doesn't care
             Bxyz = Default_values;
@@ -117,7 +119,7 @@ switch numel(varargin) % faster than if exist('use_these_params','var')
         d__cs_half_thickness_rj                 = Default_values.d__cs_half_thickness_rj                ;
         xt__cs_tilt_degs                        = Default_values.xt__cs_tilt_degs                       ;
         xp__cs_rhs_azimuthal_angle_of_tilt_degs = Default_values.xp__cs_rhs_azimuthal_angle_of_tilt_degs;
-        i_rho__radial_current_density_nT     = Default_values.i_rho__radial_current_density_nT    ;
+        i_rho__radial_current_intensity_MA      = Default_values.i_rho__radial_current_intensity_MA     ;
         error_check = Default_values.error_check ;
         
     otherwise
@@ -140,7 +142,7 @@ if error_check(1)
     if  (~isnumeric(d__cs_half_thickness_rj                )) || (numel(d__cs_half_thickness_rj                )~=1), error('ERROR: Field          d__cs_half_thickness_rj        must be a scalar double number');end
     if  (~isnumeric(xt__cs_tilt_degs                       )) || (numel(xt__cs_tilt_degs                       )~=1), error('ERROR: Field             xt__cs_tilt_degs            must be a scalar double number');end
     if  (~isnumeric(xp__cs_rhs_azimuthal_angle_of_tilt_degs)) || (numel(xp__cs_rhs_azimuthal_angle_of_tilt_degs)~=1), error('ERROR: Field xp__cs_rhs_azimuthal_angle_of_tilt_degs must be a scalar double number');end
-    if  (~isnumeric(i_rho__radial_current_density_nT    )) || (numel(i_rho__radial_current_density_nT    )~=1), error('ERROR: Field   i_rho__radial_current_density_nT   must be a scalar double number');end
+    if  (~isnumeric(i_rho__radial_current_intensity_MA     )) || (numel(i_rho__radial_current_intensity_MA     )~=1), error('ERROR: Field    i_rho__radial_current_intensity_MA   must be a scalar double number');end
     
     %if  (error_check~=0) && (error_check~=1), error('ERROR: Field  error_check must be 0 or 1');end
     % if here error_check must be scalar and not 0
@@ -364,7 +366,7 @@ end
 
 
 % New to CAN2020 (not included in CAN1981): radial current produces an azimuthal field, so Bphi is nonzero
-bphi1 = 2.7975*i_rho__radial_current_density_nT./rho1;
+bphi1 = 2.7975*i_rho__radial_current_intensity_MA./rho1;
 if scalar_input
     if abs_z1 < d__cs_half_thickness_rj, bphi1 =  bphi1 * abs_z1 / d__cs_half_thickness_rj; end
     

@@ -32,7 +32,7 @@ function brtp = con2020_model_rtp(eq_type, r_rj, colat_rads, elong_rads, varargi
 % Optional input of a structure: use_these_params
 % with the structure fields:
 %  use_these_params.mu_i_div2__current_density_nT           - mu0i0/2 term (current sheet current density), in nT
-%  use_these_params.i_rho__radial_current_density_nT        - radial current term from Connerney et al., 2020 (set this to zero to turn radial currents off as in Connerney et al. 1981)
+%  use_these_params.i_rho__radial_current_intensity_MA      - radial current term from Connerney et al., 2020 (set this to zero to turn radial currents off as in Connerney et al. 1981)
 %  use_these_params.r0__inner_rj                            - inner edge of current disk in Rj
 %  use_these_params.r1__outer_rj                            - outer edge of current disk in Rj
 %  use_these_params.d__cs_half_thickness_rj                 - current sheet half thickness in Rj
@@ -48,11 +48,11 @@ function brtp = con2020_model_rtp(eq_type, r_rj, colat_rads, elong_rads, varargi
 % Outputs:
 %  B - Spherical Magnetic field vector from current sheet model, [Br, Btheta, Bphi], units of nT.
 %
-% This code takes a hybrid approach to calculating the current sheet field, using the integral equations in some regions
+% This code can take a hybrid approach to calculating the current sheet field, using the integral equations in some regions
 % and the analytic equations in others.
 % Following Connerney et al. 1981, figure A1, and Edwards et al. (2001), figure 2, the choice of integral vs. analytic
 % equations is most important near rho = r0 and z = 0.
-% By default, this code uses the analytic equations everywhere except |Z| < D*1.5 and |Rho-R0| < 2
+% By default, this hybrid method uses the analytic equations everywhere except |Z| < D*1.5 and |Rho-R0| < 2
 %    Analytic equations:
 %        For the analytic equations, we use the equations provided by Edwards et al. 2001:
 %         https://doi.org/10.1016/S0032-0633(00)00164-1
@@ -73,6 +73,7 @@ function brtp = con2020_model_rtp(eq_type, r_rj, colat_rads, elong_rads, varargi
 % which was then replaced by some in-line code instead of calling the subfunction
 % RJ Wilson split initial Matlab and IDL code in to Cartesian and a Spherical wrapper code and updated this help text,
 % in August 2021, to make con2020_model_xyz and con2020_model_rtp.
+% RJW Wilson renamed i_rho__radial_current_density_nT to i_rho__radial_current_intensity_MA in June 2022.
 
 if strcmpi(eq_type,'default_values') % case insensitive. % Not yet checked if eq_type is a character string, Matlab doesn't care
     brtp = con2020_model_xyz(eq_type);
