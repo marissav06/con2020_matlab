@@ -47,9 +47,9 @@ These codes were developed by Fran Bagenal, Marty Brennan, Matt James, Gabby Pro
     <td>139.6 nT</td>
   </tr>
   <tr>
-    <td>i_rho__radial_current_density_nT</td>
+    <td>i_rho__radial_current_intensity_MA</td>
     <td>radial current term from Connerney et al., 2020 (set this to zero to turn radial currents off as in Connerney et al. 1981)</td>
-    <td>16.7 nT</td>
+    <td>16.7 MA</td>
   </tr>
   <tr>
     <td>r0__inner_rj</td>
